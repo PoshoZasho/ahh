@@ -1,7 +1,6 @@
 # Test for lis.py and lispy.py
 
-
-lis_tests = [
+LIS_TESTS = [
     ("(quote (testing 1 (2.0) -3.14e159))", ['testing', 1, [2.0], -3.14e159]),
     ("(+ 2 2)", 4),
     ("(+ (* 2 100) (* 1 10))", 210),
@@ -33,22 +32,22 @@ lis_tests = [
     (define mid (lambda (seq) (/ (length seq) 2)))
     ((combine append) (take (mid deck) deck) (drop (mid deck) deck)))))""", None),
     ("(riff-shuffle (list 1 2 3 4 5 6 7 8))", [1, 5, 2, 6, 3, 7, 4, 8]),
-    ("((repeat riff-shuffle) (list 1 2 3 4 5 6 7 8))",  [1, 3, 5, 7, 2, 4, 6, 8]),
-    ("(riff-shuffle (riff-shuffle (riff-shuffle (list 1 2 3 4 5 6 7 8))))", [1,2,3,4,5,6,7,8]),
+    ("((repeat riff-shuffle) (list 1 2 3 4 5 6 7 8))", [1, 3, 5, 7, 2, 4, 6, 8]),
+    ("(riff-shuffle (riff-shuffle (riff-shuffle \
+    (list 1 2 3 4 5 6 7 8))))", [1, 2, 3, 4, 5, 6, 7, 8])
     ]
 
-
-lispy_tests = [
-    ("()", SyntaxError), ("(set! x)", SyntaxError), 
+LISPY_TESTS = [
+    ("()", SyntaxError), ("(set! x)", SyntaxError),
     ("(define 3 4)", SyntaxError),
-    ("(quote 1 2)", SyntaxError), ("(if 1 2 3 4)", SyntaxError), 
+    ("(quote 1 2)", SyntaxError), ("(if 1 2 3 4)", SyntaxError),
     ("(lambda 3 3)", SyntaxError), ("(lambda (x))", SyntaxError),
-    ("""(if (= 1 2) (define-macro a 'a) 
+    ("""(if (= 1 2) (define-macro a 'a)
      (define-macro a 'b))""", SyntaxError),
     ("(define (twice x) (* 2 x))", None), ("(twice 2)", 4),
     ("(twice 2 2)", TypeError),
     ("(define lyst (lambda items items))", None),
-    ("(lyst 1 2 3 (+ 2 2))", [1,2,3,4]),
+    ("(lyst 1 2 3 (+ 2 2))", [1, 2, 3, 4]),
     ("(if 1 2)", 2),
     ("(if (= 3 4) 2)", None),
     ("(define ((account bal) amt) (set! bal (+ bal amt)) bal)", None),
@@ -70,59 +69,54 @@ lispy_tests = [
     ("(sum-squares-range 1 3000)", 9004500500), ## Tests tail recursion
     ("(call/cc (lambda (throw) (+ 5 (* 10 (throw 1))))) ;; throw", 1),
     ("(call/cc (lambda (throw) (+ 5 (* 10 1)))) ;; do not throw", 15),
-    ("""(call/cc (lambda (throw) 
+    ("""(call/cc (lambda (throw)
          (+ 5 (* 10 (call/cc (lambda (escape) (* 100 (escape 3)))))))) ; 1 level""", 35),
-    ("""(call/cc (lambda (throw) 
+    ("""(call/cc (lambda (throw)
          (+ 5 (* 10 (call/cc (lambda (escape) (* 100 (throw 3)))))))) ; 2 levels""", 3),
-    ("""(call/cc (lambda (throw) 
+    ("""(call/cc (lambda (throw)
          (+ 5 (* 10 (call/cc (lambda (escape) (* 100 1))))))) ; 0 levels""", 1005),
     ("(* 1i 1i)", -1), ("(sqrt -1)", 1j),
     ("(let ((a 1) (b 2)) (+ a b))", 3),
     ("(let ((a 1) (b 2 3)) (+ a b))", SyntaxError),
     ("(and 1 2 3)", 3), ("(and (> 2 1) 2 3)", 3), ("(and)", True),
     ("(and (> 2 1) (> 2 3))", False),
-    ("(define-macro unless (lambda args `(if (not ,(car args)) (begin ,@(cdr args))))) ; test `", None),
+    ("(define-macro unless (lambda args `(if (not ,(car args)) \
+    (begin ,@(cdr args))))) ; test `", None),
     ("(unless (= 2 (+ 1 1)) (display 2) 3 4)", None),
     (r'(unless (= 4 (+ 1 1)) (display 2) (display "\n") 3 4)', 4),
-    ("(quote x)", 'x'), 
-    ("(quote (1 2 three))", [1, 2, 'three']), 
+    ("(quote x)", 'x'),
+    ("(quote (1 2 three))", [1, 2, 'three']),
     ("'x", 'x'),
     ("'(one 2 3)", ['one', 2, 3]),
     ("(define L (list 1 2 3))", None),
-    ("`(testing ,@L testing)", ['testing',1,2,3,'testing']),
-    ("`(testing ,L testing)", ['testing',[1,2,3],'testing']),
+    ("`(testing ,@L testing)", ['testing', 1, 2, 3, 'testing']),
+    ("`(testing ,L testing)", ['testing', [1, 2, 3], 'testing']),
     ("`,@L", SyntaxError),
     ("""'(1 ;test comments '
      ;skip this line
      2 ; more ; comments ; ) )
-     3) ; final comment""", [1,2,3]),
+     3) ; final comment""", [1, 2, 3]),
     ]
 
 def test(tests, name=''):
     "For each (exp, expected) test case, see if eval(parse(exp)) == expected."
     fails = 0
-    for (x, expected) in tests:
+    for (expression, expected) in tests:
         try:
-            result = eval(parse(x))
-            print x, '=>', to_string(result)
-            ok = (result == expected)
+            result = evaluate(parse(expression))
+            print(expression, '=>', str(result))
+            is_ok = (result == expected)
         except Exception as e:
-            print x, '=raises=>', type(e).__name__, e
-            ok = issubclass(expected, Exception) and isinstance(e, expected)
-        if not ok:
+            print(expression, '=raises=>', type(e).__name__, e)
+            is_ok = issubclass(expected, e) and isinstance(e, expected)
+        if not is_ok:
             fails += 1
-            print 'FAIL!!!  Expected', expected
-    print '%s %s: %d out of %d tests fail.' % ('*'*45, name, fails, len(tests))
+            print('FAIL!!!  Expected', expected)
+    print('%s %s: %d out of %d tests fail.' % ('*'*45, name, fails, len(tests)))
 
 if __name__ == '__main__':
     from lis import *
-    test(lis_tests, 'lis.py')
-    from lispy import *
-    test(lis_tests+lispy_tests, 'lispy.py')
-
-
-
-
-
-
-
+    test(LIS_TESTS, 'lis.py')
+    #from lispy import *
+    #test(LIS_TESTS+LISPY_TESTS, 'lispy.py')
+    
